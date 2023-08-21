@@ -10,6 +10,7 @@ const (
 	SQLOperation_Lte     SQLOperation = "<="
 	SQLOperation_Ne      SQLOperation = "<>"
 	SQLOperation_In      SQLOperation = "IN"
+	SQLOperation_Between SQLOperation = "BETWEEN"
 	SQLOperation_Contain SQLOperation = "ILIKE"
 
 	StringContainValuePattern = "%%%s%%"

@@ -22,13 +22,11 @@ func main() {
 		inner join business b ON cb.business_id = b.id
 		left join document_validation dv on b.id  = dv.owner_id`
 
-	// q.Exceptions = []Exception{
-	// 	{Column: "c.id", Operation: constant.SQLOperation_Eq, Value: "xxx-123"},
-	// 	{Column: "c.age", Operation: constant.SQLOperation_Eq, Value: 33},
-	// }
+	q.
+		Where(Exception{Column: "c.id", Operation: constant.SQLOperation_Eq, Value: "xxx-123"}).
+		Where(Exception{Column: "c.age", Operation: constant.SQLOperation_In, Value: []interface{}{"33", "34"}})
 
-	q.Where(Exception{Column: "c.id", Operation: constant.SQLOperation_Eq, Value: "xxx-123"}).
-		Where(Exception{Column: "c.age", Operation: constant.SQLOperation_In, Value: []interface{}{"33", "34"}}).
+	q.Or(Exception{Column: "dv.expiry", Operation: constant.SQLOperation_Between, Value: []interface{}{"2023-08-22", "2023-08-23"}}).
 		SetPagination(2, 5)
 
 	x, y := q.ToSQL()
@@ -66,21 +64,26 @@ func (q *QueryBuilder) ToSQL() (string, []interface{}) {
 		fmt.Fprintf(&q.Builder, " from %s", q.Table)
 	}
 
+	// set where clause
 	for _, ex := range q.Exceptions {
 		l := len(ex.runningParam)
-		if l == 1 {
-			fmt.Fprintf(&q.Builder, "%s (%s %s $%d)", ex.WhereOperation, ex.Column, ex.Operation, ex.runningParam[0])
-		} else if l > 1 {
-			fmt.Fprintf(&q.Builder, "%s (%s %s ", ex.WhereOperation, ex.Column, ex.Operation)
+		if ex.Operation == constant.SQLOperation_Between {
+			fmt.Fprintf(&q.Builder, "%s (%s %s $%d AND $%d)", ex.WhereOperation, ex.Column, ex.Operation, ex.runningParam[0], ex.runningParam[1])
+		} else {
+			if l == 1 {
+				fmt.Fprintf(&q.Builder, "%s (%s %s $%d)", ex.WhereOperation, ex.Column, ex.Operation, ex.runningParam[0])
+			} else if l > 1 {
+				fmt.Fprintf(&q.Builder, "%s (%s %s ", ex.WhereOperation, ex.Column, ex.Operation)
 
-			for i := 0; i < l; i++ {
-				if i == l-1 {
-					fmt.Fprintf(&q.Builder, "$%d", ex.runningParam[i])
-				} else {
-					fmt.Fprintf(&q.Builder, "$%d, ", ex.runningParam[i])
+				for i := 0; i < l; i++ {
+					if i == l-1 {
+						fmt.Fprintf(&q.Builder, "$%d", ex.runningParam[i])
+					} else {
+						fmt.Fprintf(&q.Builder, "$%d, ", ex.runningParam[i])
+					}
 				}
+				q.Builder.WriteString(")")
 			}
-			q.Builder.WriteString(")")
 		}
 	}
 
