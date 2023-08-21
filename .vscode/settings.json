@@ -1,0 +1,6 @@
+{
+    "go.testFlags": [
+        "-coverpkg=github.com/centraldigital/${workspaceFolderBasename}/internal/service,github.com/centraldigital/${workspaceFolderBasename}/internal/mapper",
+        "--tags=test"
+    ]
+}
